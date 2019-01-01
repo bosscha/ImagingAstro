@@ -100,12 +100,7 @@ function thresholdingWav(wt, d::UnivariateDistribution , σ = 3 , kernel1d=b3spl
     else
         println("##WT--Simulating the noise in the WT.")
         threshold = zeros(nw[1])
-        if ndims(wt[1]) == 1 
-          noise = rand(d , nxy[1])
-        else
-          noise = rand(d , nxy[1], nxy[2])
-        end
-        
+        noise = rand(d , nxy...)
         wsimul = atrous(noise , nw[1]-1 , kernel1d , false)
         threshold = σ .* noiseWav(wsimul)
     end
