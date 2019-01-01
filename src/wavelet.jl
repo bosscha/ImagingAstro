@@ -15,11 +15,8 @@ function atrous(im::AbstractArray, levels , kernel1d = b3spline1d, verbose = tru
         approx = Base.copy(im)
          
         flag2d = true
-        imdim = size(im) ; ndim = 0
-        for i in imdim
-          ndim += 1
-        end
-        if ndim == 1 
+      
+        if ndims(im) == 1 
           flag2d = false
         end
         
@@ -89,7 +86,7 @@ end
 
 ## Hard thresholding on the WT coefficients.
 ## wt: wavelet transform
-## d : random distribution
+## d : random distribution of the noise
 ## σ : threshold in std from the simulated noise, if an array of length== nw[1] then used for thresholding
 ##
 function thresholdingWav(wt, d::UnivariateDistribution , σ = 3 , kernel1d=b3spline1d)
@@ -103,19 +100,18 @@ function thresholdingWav(wt, d::UnivariateDistribution , σ = 3 , kernel1d=b3spl
     else
         println("##WT--Simulating the noise in the WT.")
         threshold = zeros(nw[1])
-        noise = rand(d , nxy[1] , nxy[2])
+        if ndims(wt[1]) == 1 
+          noise = rand(d , nxy[1])
+        else
+          noise = rand(d , nxy[1], nxy[2])
+        end
+        
         wsimul = atrous(noise , nw[1]-1 , kernel1d , false)
         threshold = σ .* noiseWav(wsimul)
     end
     
     for p in 1:nw[1]
-        for i in 1:nxy[1]
-            for j in 1:nxy[2]
-                if abs(wt[p][i,j]) < threshold[p]
-                   wtfilt[p][i,j] = 0
-                end
-            end
-        end
+           wtfilt[p][ abs.(wt[p]) .< threshold[p] ] .= 0
     end
     return(wtfilt)
 end
